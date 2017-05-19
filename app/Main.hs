@@ -11,7 +11,7 @@ import           Text.ParserCombinators.Parsec hiding (Column)
 import qualified Text.Show.Pretty              as PP
 import           Types
 
-processImport :: ImportDefinition -> File -> Writer[String] [File]
+processImport :: ImportDefinition -> File -> Writer[T.Text] [File]
 processImport _ [] = return []
 processImport (ImportDefinition colmns fltrs) (header : rows) =
   let
@@ -49,7 +49,13 @@ testCsv :: File
 testCsv = [["name","age"],["jack","21"],["james","25"]] :: File
 
 testImport :: ImportDefinition
-testImport = ImportDefinition [(Column "name" "name"), (Column "age" "age")] [(delete "25" (Column "age" "age")), (findAndReplace "21" "x" (Column "age" "age"))]
+testImport = ImportDefinition [
+    (Column "name" "name"),
+    (Column "age" "age")
+  ] [
+    (deleteFilter "25" (Column "age" "age"))
+      -- , (findAndReplace "21" "x" (Column "age" "age"))
+  ]
 
 llsImport :: ImportDefinition
 llsImport = ImportDefinition [
@@ -71,10 +77,10 @@ llsImport = ImportDefinition [
               (mkCol "relay_team"),
               (mkCol "ASSIGNED_EVENT")
               ] [
-                deleteIfContains "K" (mkCol "ASSIGNED_EVENT")
-              , deleteIfContains "N" (mkCol "ASSIGNED_EVENT")
-              , delete "" (mkCol "no.")
-              , fileSplitOnColumn (mkCol "no.")
+                deleteIfContainsFilter "K" (mkCol "ASSIGNED_EVENT")
+              , deleteIfContainsFilter "N" (mkCol "ASSIGNED_EVENT")
+              , deleteFilter "" (mkCol "no.")
+              , fileSplitOnColumnFilter (mkCol "no.")
               ]
 
 rwbImport :: ImportDefinition

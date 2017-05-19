@@ -13,10 +13,15 @@ findAndReplace :: T.Text -> T.Text -> Column -> FilterOp
                                           -- each row list, each row, each (Column, String)
 findAndReplace oldString newString column = fmap (fmap (fmap (findReplaceHelper oldString newString column)))
 
-findReplaceHelper :: T.Text -> T.Text -> Column -> (Column, T.Text) -> FilterOp
+findReplaceHelper :: T.Text -> T.Text -> Column -> (Column, T.Text) -> (Column, T.Text)
 findReplaceHelper oldString newString column (testColumn, str)
                   | column == testColumn = (column, T.replace oldString newString str)
                   | otherwise = (testColumn, str)
+
+deleteFilter :: T.Text -> Column -> Filter
+deleteFilter string column =
+    let op = delete string column
+    in (logFilteredCount op  ("Delete where " <> T.pack (show column) <> " == " <> string), op)
 
 -- matching string and column to delete on
 delete :: T.Text -> Column -> FilterOp
@@ -45,6 +50,11 @@ deleteIf                :: (a -> Bool) -> [a] -> [a]
 deleteIf _  []     = []
 deleteIf eq (y:ys) = if eq y then deleteIf eq ys else y : deleteIf eq ys
 
+deleteIfContainsFilter :: T.Text -> Column -> Filter
+deleteIfContainsFilter string column =
+    let op = deleteIfContains string column
+    in (logFilteredCount op  ("Delete where " <> T.pack (show column) <> " contains " <> string), op)
+
 deleteIfContains :: T.Text -> Column -> FilterOp
 deleteIfContains string column = fmap (deleteIf (\row -> containsString string (getColumnValue column row )))
 
@@ -52,16 +62,22 @@ containsString :: T.Text -> Maybe T.Text -> Bool
 containsString _ Nothing                = False
 containsString testString (Just string) = T.isInfixOf testString string
 
+fileSplitOnColumnFilter :: Column -> Filter
+fileSplitOnColumnFilter column =
+    let op = fileSplitOnColumn column
+    in (logFilesCount op (T.pack $ show column), op)
+
 fileSplitOnColumn :: Column -> FilterOp
 fileSplitOnColumn col = L.concat . fmap (\row -> (fileSplitOnColumnHelper col row))
 
 fileSplitOnColumnHelper :: Column -> [Row] -> [[Row]]
 fileSplitOnColumnHelper col rows = L.groupBy (\a b -> ((getColumnValue col a) == (getColumnValue col b))) rows
 
-
+logFilesCount :: FilterOp -> T.Text -> [[Row]] -> [T.Text]
+logFilesCount op name rows = ["Splitting on " <> name <> " " <> (T.pack $ show $ length rows) <> " -> " <> (T.pack $ show $ length $ op rows) <> " files"]
 
 logFilteredCount :: FilterOp -> T.Text -> [[Row]] -> [T.Text]
-logFilteredCount op name rows = ["Filtering " <> name <> (show (countRows rows - countRows (op rows)))]
+logFilteredCount op name rows = ["Filtering " <> name <> (T.pack $ show (countRows rows - countRows (op rows)))]
 
 countRows :: [[Row]] -> Int
 countRows rows = length $ concat rows
