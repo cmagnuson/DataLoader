@@ -21,7 +21,7 @@ findReplaceHelper oldString newString column (testColumn, str)
 deleteFilter :: T.Text -> Column -> Filter
 deleteFilter string column =
     let op = delete string column
-    in (logFilteredCount op  ("Delete where " <> T.pack (show column) <> " == " <> string), op)
+    in (logFilteredCount op  ("Delete where " <> (exportName column) <> " == " <> string), op)
 
 -- matching string and column to delete on
 delete :: T.Text -> Column -> FilterOp
@@ -53,7 +53,7 @@ deleteIf eq (y:ys) = if eq y then deleteIf eq ys else y : deleteIf eq ys
 deleteIfContainsFilter :: T.Text -> Column -> Filter
 deleteIfContainsFilter string column =
     let op = deleteIfContains string column
-    in (logFilteredCount op  ("Delete where " <> T.pack (show column) <> " contains " <> string), op)
+    in (logFilteredCount op  ("Delete where " <> (exportName column) <> " contains " <> string), op)
 
 deleteIfContains :: T.Text -> Column -> FilterOp
 deleteIfContains string column = fmap (deleteIf (\row -> containsString string (getColumnValue column row )))
@@ -65,7 +65,7 @@ containsString testString (Just string) = T.isInfixOf testString string
 fileSplitOnColumnFilter :: Column -> Filter
 fileSplitOnColumnFilter column =
     let op = fileSplitOnColumn column
-    in (logFilesCount op (T.pack $ show column), op)
+    in (logFilesCount op (exportName column), op)
 
 fileSplitOnColumn :: Column -> FilterOp
 fileSplitOnColumn col = L.concat . fmap (\row -> (fileSplitOnColumnHelper col row))
@@ -77,7 +77,7 @@ logFilesCount :: FilterOp -> T.Text -> [[Row]] -> [T.Text]
 logFilesCount op name rows = ["Splitting on " <> name <> " " <> (T.pack $ show $ length rows) <> " -> " <> (T.pack $ show $ length $ op rows) <> " files"]
 
 logFilteredCount :: FilterOp -> T.Text -> [[Row]] -> [T.Text]
-logFilteredCount op name rows = ["Filtering " <> name <> (T.pack $ show (countRows rows - countRows (op rows)))]
+logFilteredCount op name rows = [name <> ": " <> (T.pack $ show (countRows rows - countRows (op rows)))]
 
 countRows :: [[Row]] -> Int
 countRows rows = length $ concat rows

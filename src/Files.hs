@@ -2,15 +2,11 @@
 
 module Files where
 
-import           Types
---import Text.Regex
--- import Data.CSV
--- import Data.T.Text.Utils
 import           Data.List
 import           Data.Maybe
-import qualified Data.Text   as T
-import           Debug.Trace
+import qualified Data.Text  as T
 import           Safe
+import           Types
 
 toRows :: File -> ImportHeader -> [Column] -> [Row]
 toRows [] _ _ = []

@@ -4,7 +4,6 @@ import           Control.Monad.Writer
 import qualified Data.Text                     as T
 import           Files
 import           Filters
-import           Lucid
 import           System.Environment
 import           Text.CSV
 import           Text.ParserCombinators.Parsec hiding (Column)
@@ -21,12 +20,12 @@ processImport (ImportDefinition colmns fltrs) (header : rows) =
       return (fromRows rowss)
 --  fromRows (filterRows [(toRows rows header colmns)] fltrs)
 
-numberColumn :: Column
-numberColumn = Column "RaceNumber" "No."
-relayColumn :: Column
-relayColumn = Column "Display/TeamName" "RELAY_TEAM"
-eventColumn :: Column
-eventColumn = Column "Event Name" "ASSIGNED_EVENT"
+_numberColumn :: Column
+_numberColumn = Column "RaceNumber" "No."
+_relayColumn :: Column
+_relayColumn = Column "Display/TeamName" "RELAY_TEAM"
+_eventColumn :: Column
+_eventColumn = Column "Event Name" "ASSIGNED_EVENT"
 
 main :: IO ()
 main = do
@@ -45,11 +44,11 @@ runImport _ _                          = error "FIXME: error parsing"
 csvToFile :: CSV -> File
 csvToFile = fmap $ fmap T.pack
 
-testCsv :: File
-testCsv = [["name","age"],["jack","21"],["james","25"]] :: File
+_testCsv :: File
+_testCsv = [["name","age"],["jack","21"],["james","25"]] :: File
 
-testImport :: ImportDefinition
-testImport = ImportDefinition [
+_testImport :: ImportDefinition
+_testImport = ImportDefinition [
     (Column "name" "name"),
     (Column "age" "age")
   ] [
@@ -83,16 +82,16 @@ llsImport = ImportDefinition [
               , fileSplitOnColumnFilter (mkCol "no.")
               ]
 
-rwbImport :: ImportDefinition
-rwbImport = ImportDefinition [
-          numberColumn,
+_rwbImport :: ImportDefinition
+_rwbImport = ImportDefinition [
+          _numberColumn,
           (Column "FirstName" "First Name"),
           (Column "LastName" "Last Name"),
           (Column "Gender" "Sex"),
           (Column "Confirmation Code" "REGID"),
           (Column "Series Code" "CHALLENGE_CODE"),
-          relayColumn,
-          eventColumn,
+          _relayColumn,
+          _eventColumn,
           (Column "Address" "Address"),
           (Column "City" "City"),
           (Column "State" "State"),
