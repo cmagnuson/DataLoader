@@ -32,3 +32,9 @@ printHeader (row:_) = fmap (\(column, _) -> exportName column) row
 
 printRow :: Row -> ImportRow
 printRow = fmap snd
+
+fileToString :: File -> String
+fileToString file = intercalate "\r\n" $ fmap importRowToString file
+
+importRowToString :: ImportRow -> String
+importRowToString row = intercalate "," $ fmap show row

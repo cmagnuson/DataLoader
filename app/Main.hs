@@ -31,14 +31,19 @@ main :: IO ()
 main = do
   [file1'] <- getArgs
   file1 <- parseCSVFromFile file1'
-  putStrLn $ runImport llsImport file1
+  let (files, logs) = runImport llsImport file1;
+  mapM_ (saveFile file1' files) [0 .. length files - 1]
+  putStrLn logs
 
-runImport :: ImportDefinition -> Either ParseError CSV -> String
+saveFile :: String -> [File] -> Int -> IO()
+saveFile path files idx = writeFile (path <> "_processed_" <> show (idx+1) <> ".csv") (fileToString (files !! idx))
+
+runImport :: ImportDefinition -> Either ParseError CSV -> ([File], String)
 runImport importDefinition (Right csv1) =
   let
    (files, logs) = runWriter (processImport importDefinition $ csvToFile csv1)
    in
-    PP.ppShow files ++ PP.ppShow logs
+    (files, PP.ppShow logs)
 runImport _ _                          = error "FIXME: error parsing"
 
 csvToFile :: CSV -> File
