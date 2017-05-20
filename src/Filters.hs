@@ -28,16 +28,6 @@ delete :: T.Text -> Column -> FilterOp
 delete string column = fmap (deleteIf (\row -> getColumnValue column row == Just string))
 
 
---sortAsc :: Column -> FilterOp
---FIXME!
---sortAsc column = \x -> fmap (sort (getColumnValue column)) x
-
---sortDsc :: Column -> FilterOp
---sortDsc column = \x -> fmap reverse (sortAsc column x)
-
---TODO: add me!
--- split :: Column -> FilterOp
-
 getColumnValue :: Column -> Row -> Maybe T.Text
 getColumnValue testCol ((col, str) : rest)
                | col == testCol = Just str
