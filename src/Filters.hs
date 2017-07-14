@@ -70,7 +70,8 @@ fileSplitOnColumnHelper :: Column -> [Row] -> [[Row]]
 fileSplitOnColumnHelper col rows = L.transpose $ L.groupBy (\a b -> ((getColumnValue col a) == (getColumnValue col b))) rows
 
 logFilesCount :: FilterOp -> T.Text -> [[Row]] -> [T.Text]
-logFilesCount op name rows = ["Splitting on " <> name <> " " <> (T.pack $ show $ length rows) <> " -> " <> (T.pack $ show $ length $ op rows) <> " files"]
+logFilesCount op name rows = ["Splitting on " <> name <> " " <> (T.pack $ show $ length rows) <> " -> " <> (T.pack $ show $ length $ op rows) <> " files "
+                              <> (T.pack $ show $ fmap length $ op rows)]
 
 logFilteredCount :: FilterOp -> T.Text -> [[Row]] -> [T.Text]
 logFilteredCount op name rows = [name <> ": " <> (T.pack $ show (countRows rows - countRows (op rows)))]

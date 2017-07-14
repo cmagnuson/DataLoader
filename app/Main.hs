@@ -4,6 +4,7 @@ import           Control.Monad.Writer
 import qualified Data.Text                     as T
 import           Files
 import           Filters
+import           Summary
 import           System.Environment
 import           Text.CSV
 import           Text.ParserCombinators.Parsec hiding (Column)
@@ -84,6 +85,8 @@ mnHalfImport = ImportDefinition [
                 deleteFilter "" (mkCol "ASSIGNED_EVENT")
               , deleteFilter "" (mkCol "no.")
               , fileSplitOnColumnFilter (mkCol "no.")
+              , countColumnUniqueValues (mkCol "ASSIGNED_EVENT")
+              , countColumnUniqueValues (mkCol "sex")
               -- TODO: split also those with S ASSIGNED_EVENT (skate) into seprate file then those with anything else
               ]
 

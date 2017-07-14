@@ -20,6 +20,7 @@ library
   exposed-modules:     Files
                       , Filters
                       , Types
+                      , Summary
   build-depends:       base >= 4.7 && < 5
                       , text
                       , safe
