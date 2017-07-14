@@ -3,6 +3,7 @@
 module Filters where
 
 import qualified Data.List   as L
+import           Data.Maybe
 import           Data.Monoid
 import qualified Data.Text   as T
 import           Types
@@ -13,10 +14,13 @@ findAndReplace :: T.Text -> T.Text -> Column -> FilterOp
                                           -- each row list, each row, each (Column, String)
 findAndReplace oldString newString column = fmap (fmap (fmap (findReplaceHelper oldString newString column)))
 
-findReplaceHelper :: T.Text -> T.Text -> Column -> (Column, T.Text) -> (Column, T.Text)
-findReplaceHelper oldString newString column (testColumn, str)
-                  | column == testColumn = (column, T.replace oldString newString str)
-                  | otherwise = (testColumn, str)
+findReplaceHelper :: T.Text -> T.Text -> Column -> (Column, Maybe T.Text) -> (Column, Maybe T.Text)
+findReplaceHelper oldString newString column (testColumn, strM)
+                  | column == testColumn = (column, Just $ T.replace oldString newString str)
+                  | otherwise = (testColumn, Just str)
+                  where
+                    str = fromMaybe "" strM
+
 
 deleteFilter :: T.Text -> Column -> Filter
 deleteFilter string column =
@@ -29,10 +33,12 @@ delete string column = fmap (deleteIf (\row -> getColumnValue column row == Just
 
 
 getColumnValue :: Column -> Row -> Maybe T.Text
-getColumnValue testCol ((col, str) : rest)
+getColumnValue testCol ((col, strM) : rest)
                | col == testCol = Just str
                | null rest = Nothing
                | otherwise = getColumnValue testCol rest
+               where
+                   str = fromMaybe "" strM
 getColumnValue _ [] = Nothing
 
 -- helper to delete rows based on given predicate
@@ -61,7 +67,7 @@ fileSplitOnColumn :: Column -> FilterOp
 fileSplitOnColumn col = L.concat . fmap (\row -> (fileSplitOnColumnHelper col row))
 
 fileSplitOnColumnHelper :: Column -> [Row] -> [[Row]]
-fileSplitOnColumnHelper col rows = L.groupBy (\a b -> ((getColumnValue col a) == (getColumnValue col b))) rows
+fileSplitOnColumnHelper col rows = L.transpose $ L.groupBy (\a b -> ((getColumnValue col a) == (getColumnValue col b))) rows
 
 logFilesCount :: FilterOp -> T.Text -> [[Row]] -> [T.Text]
 logFilesCount op name rows = ["Splitting on " <> name <> " " <> (T.pack $ show $ length rows) <> " -> " <> (T.pack $ show $ length $ op rows) <> " files"]

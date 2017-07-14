@@ -17,8 +17,8 @@ toRowsHelper :: ImportRow -> ImportHeader -> [Column] -> Row
 toRowsHelper row header (c:restColumns) = (c, getColumnValue row header c) : toRowsHelper row header restColumns
 toRowsHelper _ _ [] = []
 
-getColumnValue :: ImportRow -> ImportHeader -> Column -> T.Text
-getColumnValue row header column = at row $ fromMaybe 0  (elemIndex (importName column) header)
+getColumnValue :: ImportRow -> ImportHeader -> Column -> Maybe T.Text
+getColumnValue row header column = atMay row $ fromMaybe 0  (elemIndex (importName column) header)
 
 fromRows :: [[Row]] -> [File]
 fromRows = fmap fromRowsHelper
@@ -31,7 +31,7 @@ printHeader []      = [""]
 printHeader (row:_) = fmap (\(column, _) -> exportName column) row
 
 printRow :: Row -> ImportRow
-printRow = fmap snd
+printRow = fmap (fromMaybe "" . snd)
 
 fileToString :: File -> String
 fileToString file = intercalate "\r\n" $ fmap importRowToString file

@@ -14,7 +14,7 @@ data Column = Column
 mkCol :: T.Text -> Column
 mkCol s = Column s s
 
-type Row = [(Column, T.Text)]
+type Row = [(Column, Maybe T.Text)]
 
 type ImportRow = [T.Text]
 

@@ -31,7 +31,7 @@ main :: IO ()
 main = do
   [file1'] <- getArgs
   file1 <- parseCSVFromFile file1'
-  let (files, logs) = runImport llsImport file1;
+  let (files, logs) = runImport mnHalfImport file1;
   mapM_ (saveFile file1' files) [0 .. length files - 1]
   putStrLn logs
 
@@ -61,8 +61,8 @@ _testImport = ImportDefinition [
       -- , (findAndReplace "21" "x" (Column "age" "age"))
   ]
 
-llsImport :: ImportDefinition
-llsImport = ImportDefinition [
+mnHalfImport :: ImportDefinition
+mnHalfImport = ImportDefinition [
               (mkCol "no."),
               (mkCol "First Name"),
               (mkCol "Last Name"),
@@ -81,10 +81,10 @@ llsImport = ImportDefinition [
               (mkCol "relay_team"),
               (mkCol "ASSIGNED_EVENT")
               ] [
-                deleteIfContainsFilter "K" (mkCol "ASSIGNED_EVENT")
-              , deleteIfContainsFilter "N" (mkCol "ASSIGNED_EVENT")
+                deleteFilter "" (mkCol "ASSIGNED_EVENT")
               , deleteFilter "" (mkCol "no.")
               , fileSplitOnColumnFilter (mkCol "no.")
+              -- TODO: split also those with S ASSIGNED_EVENT (skate) into seprate file then those with anything else
               ]
 
 _rwbImport :: ImportDefinition
