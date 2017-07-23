@@ -34,7 +34,6 @@ data ImportDefinition = ImportDefinition {
 }
 
 filterRows :: [[Row]] -> [Filter] -> Writer [T.Text] [[Row]]
-filterRows  [] _              = return []
 filterRows rows []            = return rows
 filterRows rows ((filtExp, filtOp) : rest) = do
                                   tell $ filtExp rows
