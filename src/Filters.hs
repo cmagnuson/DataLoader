@@ -75,8 +75,8 @@ fileSplitOnColumnHelper :: Column -> [Row] -> [[Row]]
 fileSplitOnColumnHelper col rows = L.transpose $ L.groupBy (\a b -> ((getColumnValue col a) == (getColumnValue col b))) rows
 
 fileSplitOnColumnEquals :: Column -> T.Text -> FilterOp
-fileSplitOnColumnEquals col str =
-  L.concat . fmap (\row -> fileSplitOnColumnValueEquals col (Just str) row)
+fileSplitOnColumnEquals column string =
+  L.concat . fmap (\row -> fileSplitOnColumnValueEquals column (Just string) row)
   where
     fileSplitOnColumnValueEquals col str = L.groupBy (\a b -> ((getColumnValue col a == str && getColumnValue col b == str) ||
       (getColumnValue col a /= str && getColumnValue col b /= str)))
