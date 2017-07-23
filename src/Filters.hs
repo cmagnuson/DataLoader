@@ -63,11 +63,23 @@ fileSplitOnColumnFilter column =
     let op = fileSplitOnColumn column
     in (logFilesCount op (exportName column), op)
 
+fileSplitOnColumnEqualsFilter :: Column -> T.Text -> Filter
+fileSplitOnColumnEqualsFilter column value =
+    let op = fileSplitOnColumnEquals column value
+    in (logFilesCount op (exportName column <> "==" <> value), op)
+
 fileSplitOnColumn :: Column -> FilterOp
 fileSplitOnColumn col = L.concat . fmap (\row -> (fileSplitOnColumnHelper col row))
 
 fileSplitOnColumnHelper :: Column -> [Row] -> [[Row]]
 fileSplitOnColumnHelper col rows = L.transpose $ L.groupBy (\a b -> ((getColumnValue col a) == (getColumnValue col b))) rows
+
+fileSplitOnColumnEquals :: Column -> T.Text -> FilterOp
+fileSplitOnColumnEquals col str =
+  L.concat . fmap (\row -> fileSplitOnColumnValueEquals col (Just str) row)
+  where
+    fileSplitOnColumnValueEquals col str = L.groupBy (\a b -> ((getColumnValue col a == str && getColumnValue col b == str) ||
+      (getColumnValue col a /= str && getColumnValue col b /= str)))
 
 logFilesCount :: FilterOp -> T.Text -> [[Row]] -> [T.Text]
 logFilesCount op name rows = ["Splitting on " <> name <> " " <> (T.pack $ show $ length rows) <> " -> " <> (T.pack $ show $ length $ op rows) <> " files "
