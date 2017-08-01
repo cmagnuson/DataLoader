@@ -13,8 +13,8 @@ findAndReplace :: T.Text -> T.Text -> Column -> FilterOp
 -- for each [Row] check each Row for String replacement
                                           -- each row list, each row, each (Column, String)
 findAndReplace oldString newString column = fmap (fmap (fmap (findReplaceHelper oldString newString column)))
-  where findReplaceHelper oldString newString column (testColumn, strM)
-                  | column == testColumn = (column, Just $ T.replace oldString newString str)
+  where findReplaceHelper old new col (testColumn, strM)
+                  | col == testColumn = (col, Just $ T.replace old new str)
                   | otherwise = (testColumn, Just str)
                   where
                     str = fromMaybe "" strM
@@ -67,14 +67,14 @@ fileSplitOnColumnEqualsFilter column value =
     in (logFilesCount op (exportName column <> "==" <> value), op)
 
 fileSplitOnColumn :: Column -> FilterOp
-fileSplitOnColumn col = L.concat . fmap (\row -> (fileSplitOnColumnHelper col row))
+fileSplitOnColumn column = L.concat . fmap (\row -> (fileSplitOnColumnHelper column row))
   where fileSplitOnColumnHelper col rows = L.transpose $ L.groupBy (\a b -> ((getColumnValue col a) == (getColumnValue col b))) rows
 
 fileSplitOnColumnEquals :: Column -> T.Text -> FilterOp
 fileSplitOnColumnEquals column string =
   L.concat . fmap (\row -> dePair $ fileSplitOnColumnValueEquals column (Just string) row)
   where
-    fileSplitOnColumnValueEquals col str = L.partition (\row -> getColumnValue col row == str)
+    fileSplitOnColumnValueEquals eqCol str = L.partition (\row -> getColumnValue eqCol row == str)
     dePair (a,b) = [a,b]
 
 logFilesCount :: FilterOp -> T.Text -> [[Row]] -> [T.Text]
