@@ -13,9 +13,7 @@ findAndReplace :: T.Text -> T.Text -> Column -> FilterOp
 -- for each [Row] check each Row for String replacement
                                           -- each row list, each row, each (Column, String)
 findAndReplace oldString newString column = fmap (fmap (fmap (findReplaceHelper oldString newString column)))
-
-findReplaceHelper :: T.Text -> T.Text -> Column -> (Column, Maybe T.Text) -> (Column, Maybe T.Text)
-findReplaceHelper oldString newString column (testColumn, strM)
+  where findReplaceHelper oldString newString column (testColumn, strM)
                   | column == testColumn = (column, Just $ T.replace oldString newString str)
                   | otherwise = (testColumn, Just str)
                   where
@@ -70,16 +68,14 @@ fileSplitOnColumnEqualsFilter column value =
 
 fileSplitOnColumn :: Column -> FilterOp
 fileSplitOnColumn col = L.concat . fmap (\row -> (fileSplitOnColumnHelper col row))
-
-fileSplitOnColumnHelper :: Column -> [Row] -> [[Row]]
-fileSplitOnColumnHelper col rows = L.transpose $ L.groupBy (\a b -> ((getColumnValue col a) == (getColumnValue col b))) rows
+  where fileSplitOnColumnHelper col rows = L.transpose $ L.groupBy (\a b -> ((getColumnValue col a) == (getColumnValue col b))) rows
 
 fileSplitOnColumnEquals :: Column -> T.Text -> FilterOp
 fileSplitOnColumnEquals column string =
-  L.concat . fmap (\row -> fileSplitOnColumnValueEquals column (Just string) row)
+  L.concat . fmap (\row -> dePair $ fileSplitOnColumnValueEquals column (Just string) row)
   where
-    fileSplitOnColumnValueEquals col str = L.groupBy (\a b -> ((getColumnValue col a == str && getColumnValue col b == str) ||
-      (getColumnValue col a /= str && getColumnValue col b /= str)))
+    fileSplitOnColumnValueEquals col str = L.partition (\row -> getColumnValue col row == str)
+    dePair (a,b) = [a,b]
 
 logFilesCount :: FilterOp -> T.Text -> [[Row]] -> [T.Text]
 logFilesCount op name rows = ["Splitting on " <> name <> " " <> (T.pack $ show $ length rows) <> " -> " <> (T.pack $ show $ length $ op rows) <> " files "

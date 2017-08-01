@@ -15,7 +15,7 @@ countColumnUniqueValues column = (countColumnUniqueValuesLogger column, id)
 countColumnUniqueValuesLogger :: Column -> [[Row]] -> [T.Text]
 countColumnUniqueValuesLogger column rows = ["Column " <> exportName column <> T.pack " values: " <>
           countColumnUniqueValuesPrintHelper (L.group $ L.sort (fmap (fromMaybe "" . getColumnValue column) (L.concat rows)))]
-
--- List of list of grouped values [[1,1,1], [2,2], [F,F]] to count and unique value: (1,3), (2,2), (F,2) for example
-countColumnUniqueValuesPrintHelper :: [[T.Text]] -> T.Text
-countColumnUniqueValuesPrintHelper values = T.intercalate  (T.pack ", ") (fmap (\lst -> T.pack "(" <> head lst <> T.pack  "," <> T.pack  (show $ length lst) <> T.pack  ")") values)
+          where
+            -- List of list of grouped values [[1,1,1], [2,2], [F,F]] to count and unique value: (1,3), (2,2), (F,2) for example
+            countColumnUniqueValuesPrintHelper values =
+              T.intercalate  (T.pack ", ") (fmap (\lst -> T.pack "(" <> head lst <> T.pack  "," <> T.pack  (show $ length lst) <> T.pack  ")") values)

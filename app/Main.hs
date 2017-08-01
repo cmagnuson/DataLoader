@@ -67,7 +67,7 @@ mnHalfImport = ImportDefinition [
               (mkCol "no."),
               (mkCol "First Name"),
               (mkCol "Last Name"),
-              (mkCol "sex"),
+              (mkCol "Sex"),
               (mkCol "age"),
               (mkCol "birthdate"),
               (mkCol "ADDRESS"),
@@ -87,7 +87,7 @@ mnHalfImport = ImportDefinition [
               , fileSplitOnColumnEqualsFilter (mkCol "ASSIGNED_EVENT") "S"
               , fileSplitOnColumnFilter (mkCol "no.")
               , countColumnUniqueValues (mkCol "ASSIGNED_EVENT")
-              , countColumnUniqueValues (mkCol "sex")
+              , countColumnUniqueValues (mkCol "Sex")
               -- TODO: neater file handling - better nesting of splits and naming conventions
               ]
 
