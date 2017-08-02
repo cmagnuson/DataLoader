@@ -4,6 +4,7 @@ module Types where
 
 import           Control.Monad.Writer
 import qualified Data.Text            as T
+import           Data.Tree
 
 data Column = Column
     {
@@ -20,11 +21,15 @@ type ImportRow = [T.Text]
 
 type ImportHeader = ImportRow
 
-type File = [ImportRow]
+type ImportFile = [ImportRow]
 
-type FilterOp = [[Row]] -> [[Row]]
+type File = [Row]
 
-type FilterExplanation = [[Row]] -> [T.Text]
+type Fileset = Tree File
+
+type FilterOp = Fileset -> Fileset
+
+type FilterExplanation = Fileset -> [T.Text]
 
 type Filter = (FilterExplanation, FilterOp)
 
@@ -33,7 +38,7 @@ data ImportDefinition = ImportDefinition {
      filters :: [Filter]
 }
 
-filterRows :: [[Row]] -> [Filter] -> Writer [T.Text] [[Row]]
+filterRows :: Fileset -> [Filter] -> Writer [T.Text] Fileset
 filterRows rows []            = return rows
 filterRows rows ((filtExp, filtOp) : rest) = do
                                   tell $ filtExp rows

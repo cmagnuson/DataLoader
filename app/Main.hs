@@ -2,6 +2,7 @@
 
 import           Control.Monad.Writer
 import qualified Data.Text                     as T
+import           Data.Tree
 import           Files
 import           Filters
 import           Summary
@@ -11,11 +12,11 @@ import           Text.ParserCombinators.Parsec hiding (Column)
 import qualified Text.Show.Pretty              as PP
 import           Types
 
-processImport :: ImportDefinition -> File -> Writer[T.Text] [File]
+processImport :: ImportDefinition -> ImportFile -> Writer[T.Text] [ImportFile]
 processImport _ [] = return []
 processImport (ImportDefinition colmns fltrs) (header : rows) =
   let
-    (rowss, logs) = runWriter (filterRows [toRows rows header colmns] fltrs)
+    (rowss, logs) = runWriter (filterRows  Node {rootLabel = toRows rows header colmns, subForest=[]} fltrs)
     in do
       tell logs
       return (fromRows rowss)
@@ -36,10 +37,10 @@ main = do
   mapM_ (saveFile file1' files) [0 .. length files - 1]
   putStrLn logs
 
-saveFile :: String -> [File] -> Int -> IO()
+saveFile :: String -> [ImportFile] -> Int -> IO()
 saveFile path files idx = writeFile (path <> "_processed_" <> show (idx+1) <> ".csv") (fileToString (files !! idx))
 
-runImport :: ImportDefinition -> Either ParseError CSV -> ([File], String)
+runImport :: ImportDefinition -> Either ParseError CSV -> ([ImportFile], String)
 runImport importDefinition (Right csv1) =
   let
    (files, logs) = runWriter (processImport importDefinition $ csvToFile csv1)
@@ -47,11 +48,11 @@ runImport importDefinition (Right csv1) =
     (files, PP.ppShow logs)
 runImport _ _                          = error "FIXME: error parsing"
 
-csvToFile :: CSV -> File
+csvToFile :: CSV -> ImportFile
 csvToFile = fmap $ fmap T.pack
 
-_testCsv :: File
-_testCsv = [["name","age"],["jack","21"],["james","25"]] :: File
+_testCsv :: ImportFile
+_testCsv = [["name","age"],["jack","21"],["james","25"]] :: ImportFile
 
 _testImport :: ImportDefinition
 _testImport = ImportDefinition [
@@ -84,8 +85,8 @@ mnHalfImport = ImportDefinition [
               ] [
                 deleteFilter "" (mkCol "ASSIGNED_EVENT")
               , deleteFilter "" (mkCol "no.")
-              , fileSplitOnColumnEqualsFilter (mkCol "ASSIGNED_EVENT") "S"
-              , fileSplitOnColumnFilter (mkCol "no.")
+              -- , fileSplitOnColumnEqualsFilter (mkCol "ASSIGNED_EVENT") "S"
+              -- , fileSplitOnColumnFilter (mkCol "no.")
               , countColumnUniqueValues (mkCol "ASSIGNED_EVENT")
               , countColumnUniqueValues (mkCol "Sex")
               -- TODO: neater file handling - better nesting of splits and naming conventions

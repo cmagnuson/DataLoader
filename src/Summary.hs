@@ -12,7 +12,7 @@ import           Types
 countColumnUniqueValues :: Column -> Filter
 countColumnUniqueValues column = (countColumnUniqueValuesLogger column, id)
 
-countColumnUniqueValuesLogger :: Column -> [[Row]] -> [T.Text]
+countColumnUniqueValuesLogger :: Column -> Fileset -> [T.Text]
 countColumnUniqueValuesLogger column rows = ["Column " <> exportName column <> T.pack " values: " <>
           countColumnUniqueValuesPrintHelper (L.group $ L.sort (fmap (fromMaybe "" . getColumnValue column) (L.concat rows)))]
           where

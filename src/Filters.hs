@@ -2,7 +2,7 @@
 
 module Filters where
 
-import qualified Data.List   as L
+-- import qualified Data.List   as L
 import           Data.Maybe
 import           Data.Monoid
 import qualified Data.Text   as T
@@ -56,33 +56,33 @@ containsString :: T.Text -> Maybe T.Text -> Bool
 containsString _ Nothing                = False
 containsString testString (Just string) = T.isInfixOf testString string
 
-fileSplitOnColumnFilter :: Column -> Filter
-fileSplitOnColumnFilter column =
-    let op = fileSplitOnColumn column
-    in (logFilesCount op (exportName column), op)
+-- fileSplitOnColumnFilter :: Column -> Filter
+-- fileSplitOnColumnFilter column =
+--     let op = fileSplitOnColumn column
+--     in (logFilesCount op (exportName column), op)
+--
+-- fileSplitOnColumnEqualsFilter :: Column -> T.Text -> Filter
+-- fileSplitOnColumnEqualsFilter column value =
+--     let op = fileSplitOnColumnEquals column value
+--     in (logFilesCount op (exportName column <> "==" <> value), op)
+--
+-- fileSplitOnColumn :: Column -> FilterOp
+-- fileSplitOnColumn column = L.concat . fmap (\row -> (fileSplitOnColumnHelper column row))
+--   where fileSplitOnColumnHelper col rows = L.transpose $ L.groupBy (\a b -> ((getColumnValue col a) == (getColumnValue col b))) rows
+--
+-- fileSplitOnColumnEquals :: Column -> T.Text -> FilterOp
+-- fileSplitOnColumnEquals column string =
+--   L.concat . fmap (\row -> dePair $ fileSplitOnColumnValueEquals column (Just string) row)
+--   where
+--     fileSplitOnColumnValueEquals eqCol str = L.partition (\row -> getColumnValue eqCol row == str)
+--     dePair (a,b) = [a,b]
 
-fileSplitOnColumnEqualsFilter :: Column -> T.Text -> Filter
-fileSplitOnColumnEqualsFilter column value =
-    let op = fileSplitOnColumnEquals column value
-    in (logFilesCount op (exportName column <> "==" <> value), op)
-
-fileSplitOnColumn :: Column -> FilterOp
-fileSplitOnColumn column = L.concat . fmap (\row -> (fileSplitOnColumnHelper column row))
-  where fileSplitOnColumnHelper col rows = L.transpose $ L.groupBy (\a b -> ((getColumnValue col a) == (getColumnValue col b))) rows
-
-fileSplitOnColumnEquals :: Column -> T.Text -> FilterOp
-fileSplitOnColumnEquals column string =
-  L.concat . fmap (\row -> dePair $ fileSplitOnColumnValueEquals column (Just string) row)
-  where
-    fileSplitOnColumnValueEquals eqCol str = L.partition (\row -> getColumnValue eqCol row == str)
-    dePair (a,b) = [a,b]
-
-logFilesCount :: FilterOp -> T.Text -> [[Row]] -> [T.Text]
+logFilesCount :: FilterOp -> T.Text -> Fileset -> [T.Text]
 logFilesCount op name rows = ["Splitting on " <> name <> " " <> (T.pack $ show $ length rows) <> " -> " <> (T.pack $ show $ length $ op rows) <> " files "
                               <> (T.pack $ show $ fmap length $ op rows)]
 
-logFilteredCount :: FilterOp -> T.Text -> [[Row]] -> [T.Text]
+logFilteredCount :: FilterOp -> T.Text -> Fileset -> [T.Text]
 logFilteredCount op name rows = [name <> ": " <> (T.pack $ show (countRows rows - countRows (op rows)))]
 
-countRows :: [[Row]] -> Int
+countRows :: Fileset -> Int
 countRows rows = length $ concat rows
