@@ -25,7 +25,7 @@ type ImportFile = [ImportRow]
 
 type File = [Row]
 
-type Fileset = Tree File
+type Fileset = Tree (T.Text, File)
 
 type FilterOp = Fileset -> Fileset
 
