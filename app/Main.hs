@@ -2,6 +2,7 @@
 
 import           Control.Monad.Writer
 import qualified Data.Text                     as T
+import           Data.Tree
 import           Files
 import           Filters
 import           Summary
@@ -11,11 +12,11 @@ import           Text.ParserCombinators.Parsec hiding (Column)
 import qualified Text.Show.Pretty              as PP
 import           Types
 
-processImport :: ImportDefinition -> File -> Writer[T.Text] [File]
-processImport _ [] = return []
-processImport (ImportDefinition colmns fltrs) (header : rows) =
+processImport :: ImportDefinition -> ImportFile -> T.Text -> Writer[T.Text] [(T.Text, ImportFile)]
+processImport _ [] _ = return []
+processImport (ImportDefinition colmns fltrs) (header : rows) fileSuffix =
   let
-    (rowss, logs) = runWriter (filterRows [toRows rows header colmns] fltrs)
+    (rowss, logs) = runWriter (filterRows  Node {rootLabel = (fileSuffix, toRows rows header colmns), subForest=[]} fltrs)
     in do
       tell logs
       return (fromRows rowss)
@@ -32,26 +33,26 @@ main :: IO ()
 main = do
   [file1'] <- getArgs
   file1 <- parseCSVFromFile file1'
-  let (files, logs) = runImport mnHalfImport file1;
-  mapM_ (saveFile file1' files) [0 .. length files - 1]
+  let (files, logs) = runImport mnHalfImport file1 (T.pack file1');
+  mapM_ (saveFile files) [0 .. length files - 1]
   putStrLn logs
 
-saveFile :: String -> [File] -> Int -> IO()
-saveFile path files idx = writeFile (path <> "_processed_" <> show (idx+1) <> ".csv") (fileToString (files !! idx))
+saveFile :: [(T.Text, ImportFile)] -> Int -> IO()
+saveFile files idx = writeFile (T.unpack (fst (files !! idx) <> ".csv")) (fileToString (snd $ files !! idx))
 
-runImport :: ImportDefinition -> Either ParseError CSV -> ([File], String)
-runImport importDefinition (Right csv1) =
+runImport :: ImportDefinition -> Either ParseError CSV -> T.Text -> ([(T.Text, ImportFile)], String)
+runImport importDefinition (Right csv1)  fileSuffix =
   let
-   (files, logs) = runWriter (processImport importDefinition $ csvToFile csv1)
+   (files, logs) = runWriter (processImport importDefinition (csvToFile csv1) fileSuffix)
    in
     (files, PP.ppShow logs)
-runImport _ _                          = error "FIXME: error parsing"
+runImport _ _ _                         = error "FIXME: error parsing"
 
-csvToFile :: CSV -> File
+csvToFile :: CSV -> ImportFile
 csvToFile = fmap $ fmap T.pack
 
-_testCsv :: File
-_testCsv = [["name","age"],["jack","21"],["james","25"]] :: File
+_testCsv :: ImportFile
+_testCsv = [["name","age"],["jack","21"],["james","25"]] :: ImportFile
 
 _testImport :: ImportDefinition
 _testImport = ImportDefinition [
@@ -84,7 +85,7 @@ mnHalfImport = ImportDefinition [
               ] [
                 deleteFilter "" (mkCol "ASSIGNED_EVENT")
               , deleteFilter "" (mkCol "no.")
-              , fileSplitOnColumnEqualsFilter (mkCol "ASSIGNED_EVENT") "S"
+              , fileSplitOnColumnEqualsFilter (mkCol "ASSIGNED_EVENT") "S" "Skate"
               , fileSplitOnColumnFilter (mkCol "no.")
               , countColumnUniqueValues (mkCol "ASSIGNED_EVENT")
               , countColumnUniqueValues (mkCol "Sex")
