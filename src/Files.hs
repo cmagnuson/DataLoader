@@ -22,7 +22,10 @@ getColumnValue :: ImportRow -> ImportHeader -> Column -> Maybe T.Text
 getColumnValue row header column = atMay row $ fromMaybe 0  (elemIndex (importName column) header)
 
 fromRows :: Fileset -> [ImportFile]
-fromRows fileset = flatten $ fmap fromRowsHelper fileset
+fromRows fileset = fmap fromRowsHelper $ flattenIgnoreEmpty fileset
+
+flattenIgnoreEmpty :: Fileset -> [File]
+flattenIgnoreEmpty fileset = filter (not . null) $ flatten fileset
 
 fromRowsHelper :: File -> ImportFile
 fromRowsHelper rowList = printHeader rowList : fmap printRow rowList
