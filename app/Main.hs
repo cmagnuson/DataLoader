@@ -83,10 +83,12 @@ mnHalfImport = ImportDefinition [
               (mkCol "relay_team"),
               (mkCol "ASSIGNED_EVENT")
               ] [
-                deleteFilter "" (mkCol "ASSIGNED_EVENT")
+--                deleteFilter "" (mkCol "ASSIGNED_EVENT")
+                deleteFilter "C" (mkCol "ASSIGNED_EVENT")
               , deleteFilter "" (mkCol "no.")
               , fileSplitOnColumnEqualsFilter (mkCol "ASSIGNED_EVENT") "S" "Skate"
               , fileSplitOnColumnFilter (mkCol "no.")
+              , countColumnDuplicateValues (mkCol "no.")
               , countColumnUniqueValues (mkCol "ASSIGNED_EVENT")
               , countColumnUniqueValues (mkCol "Sex")
               -- TODO: neater file handling - better nesting of splits and naming conventions
