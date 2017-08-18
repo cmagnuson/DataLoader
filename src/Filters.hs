@@ -2,7 +2,7 @@
 
 module Filters where
 
-import           Data.Char   (isAlpha)
+import           Data.Char   (isAlpha, isAlphaNum)
 import qualified Data.List   as L
 import           Data.Maybe
 import           Data.Monoid
@@ -10,6 +10,20 @@ import qualified Data.Text   as T
 import           Data.Tree
 import           Files       (flattenIgnoreEmpty)
 import           Types
+
+
+stripSpecialCharsFilter :: Filter
+stripSpecialCharsFilter  =
+  let cellOp =  checkAlpha
+      checkAlpha :: (Column, Maybe T.Text) -> (Column, Maybe T.Text)
+      checkAlpha (column, Just str) = (column, Just $ T.filter (\x -> isAlphaNum x || elem x [',',' ','\'','-','(',')','_','*','&','%','$','#','@','!', '.', ':',';','/']) str)
+      checkAlpha (column, Nothing)  = (column, Nothing)
+  in (logChangedCount cellOp  "Replaced special chars", fmap $ fmap $ fmap $ fmap cellOp)
+
+findAndReplaceFilter :: T.Text -> T.Text -> Column  -> Filter
+findAndReplaceFilter oldString newString column =
+    let op = findAndReplace oldString newString column
+    in (logFilteredCount op  ("Replace in " <> exportName column <> " " <> oldString <> " -> " <> newString), op)
 
 -- partial string to find and replacement string for given column
 findAndReplace :: T.Text -> T.Text -> Column -> FilterOp
@@ -100,6 +114,16 @@ logFilesCount op name rows = ["Splitting on " <> name <> " " <> (T.pack $ show $
 
 logFilteredCount :: FilterOp -> T.Text -> Fileset -> [T.Text]
 logFilteredCount op name rows = [name <> ": " <> (T.pack $ show (countRows rows - countRows (op rows)))]
+
+logChangedCount :: ((Column, Maybe T.Text) -> (Column, Maybe T.Text)) -> T.Text -> Fileset -> [T.Text]
+logChangedCount op name rows = [name <> ": " <> (T.pack $ show $ length (showChangedRows op rows)) <> " modified cells"] <> (showChangedRows op rows)
+
+showChangedRows :: ((Column, Maybe T.Text) -> (Column, Maybe T.Text)) -> Fileset -> [T.Text]
+showChangedRows cellOp fileset =
+  let
+        allCells :: [(Column, Maybe T.Text)]
+        allCells = concat $ concat $ fmap snd (flattenIgnoreEmpty fileset)
+  in  (fmap (\cell -> ((fromMaybe "" $ snd cell) <> " -> " <> (fromMaybe "" $ snd $ cellOp cell)))) $ filter (\cell -> (cellOp cell) /= cell) allCells
 
 countRows :: Fileset -> Int
 countRows rows = length $ concat $ fmap snd rows

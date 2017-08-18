@@ -26,7 +26,7 @@ countColumnDuplicateValues :: Column -> Filter
 countColumnDuplicateValues column = (countColumnDuplicateValuesLogger column, id)
 
 countColumnDuplicateValuesLogger :: Column -> Fileset -> [T.Text]
-countColumnDuplicateValuesLogger column rows = ["Column " <> exportName column <> T.pack "duplicate values: " <>
+countColumnDuplicateValuesLogger column rows = ["Column " <> exportName column <> T.pack " duplicate values: " <>
         countColumnUniqueValuesPrintHelper fileFreq]
           where
             fileFreq = frequencyCountFileset rows column

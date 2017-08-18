@@ -12,7 +12,7 @@ import           Text.ParserCombinators.Parsec hiding (Column)
 import qualified Text.Show.Pretty              as PP
 import           Types
 
-processImport :: ImportDefinition -> ImportFile -> T.Text -> Writer[T.Text] [(T.Text, ImportFile)]
+processImport :: ImportDefinition -> ImportFile -> T.Text -> Writer[[T.Text]] [(T.Text, ImportFile)]
 processImport _ [] _ = return []
 processImport (ImportDefinition colmns fltrs) (header : rows) fileSuffix =
   let
@@ -33,7 +33,7 @@ main :: IO ()
 main = do
   [file1'] <- getArgs
   file1 <- parseCSVFromFile file1'
-  let (files, logs) = runImport mnHalfImport file1 (T.pack file1');
+  let (files, logs) = runImport falImport file1 (T.pack file1');
   mapM_ (saveFile files) [0 .. length files - 1]
   putStrLn logs
 
@@ -92,6 +92,38 @@ mnHalfImport = ImportDefinition [
               , countColumnUniqueValues (mkCol "ASSIGNED_EVENT")
               , countColumnUniqueValues (mkCol "Sex")
               -- TODO: neater file handling - better nesting of splits and naming conventions
+              ]
+
+falImport :: ImportDefinition
+falImport = ImportDefinition [
+              Column "Runnerid" "regid",
+              Column "BibNumber" "no.",
+              Column "FullBibNumber" "bib",
+              mkCol "Tagid",
+              Column "FirstName" "first name",
+              Column "LastName" "last name",
+              Column "Gender" "sex",
+              Column "DateOfBirth" "birthdate",
+              Column "RaceDayAge" "age",
+              mkCol "city",
+              mkCol "State",
+              mkCol "Country",
+              Column "Citizenship" "country_ctz",
+              Column "Address1" "address",
+              mkCol "Zip",
+              mkCol "Email",
+              Column "FalmouthResident" "FALMOUTH",
+              Column "Shoutout" "Notes"
+              ] [
+              countColumnDuplicateValues (Column "BibNumber" "no.")
+              , countColumnDuplicateValues (Column "Runnerid" "regid")
+              -- , findAndReplaceFilter "\"" "" (Column "FirstName" "first name") -- TODO: replace on all columns special charecters
+              -- , findAndReplaceFilter "\"" "" (Column "LastName" "last name")
+              , stripSpecialCharsFilter
+              , countColumnDuplicateValues (mkCol "Tagid")
+              , countColumnUniqueValues (mkCol "Country")
+              , countColumnUniqueValues (Column "FalmouthResident" "FALMOUTH")
+              , countColumnUniqueValues (Column "Gender" "sex")
               ]
 
 _rwbImport :: ImportDefinition

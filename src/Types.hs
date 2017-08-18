@@ -38,8 +38,8 @@ data ImportDefinition = ImportDefinition {
      filters :: [Filter]
 }
 
-filterRows :: Fileset -> [Filter] -> Writer [T.Text] Fileset
+filterRows :: Fileset -> [Filter] -> Writer [[T.Text]] Fileset
 filterRows rows []            = return rows
 filterRows rows ((filtExp, filtOp) : rest) = do
-                                  tell $ filtExp rows
+                                  tell [filtExp rows]
                                   filterRows (filtOp rows) rest
