@@ -1,7 +1,10 @@
 {-# LANGUAGE OverloadedStrings #-}
 
 import           Control.Monad.Writer
+import           Data.ByteString               (ByteString, readFile)
 import qualified Data.Text                     as T
+import           Data.Text.Encoding
+import           Data.Text.Encoding.Error
 import           Data.Tree
 import           Files
 import           Filters
@@ -29,18 +32,21 @@ _relayColumn = Column "Display/TeamName" "RELAY_TEAM"
 _eventColumn :: Column
 _eventColumn = Column "Event Name" "ASSIGNED_EVENT"
 
+--TODO: read file as bytestring, then try and convert to UTF8 -> decodeUtf8With lenientDecode bs, then try and parse as csv
 main :: IO ()
 main = do
   [file1'] <- getArgs
-  file1 <- parseCSVFromFile file1'
-  let (files, logs) = runImport falImport file1 (T.pack file1');
+  bs <- Data.ByteString.readFile file1' :: IO ByteString
+  --file1 <- (parse csv "a" $ T.unpack $ decodeUtf8With lenientDecode bs)
+  --file1 <- parseCSVFromFile file1'
+  let (files, logs) = runImport falImport (parse csv "Error Parsing" $ T.unpack $ decodeUtf8With lenientDecode bs) (T.pack file1');
   mapM_ (saveFile files) [0 .. length files - 1]
   putStrLn logs
 
 saveFile :: [(T.Text, ImportFile)] -> Int -> IO()
 saveFile files idx = writeFile (T.unpack (fst (files !! idx) <> ".csv")) (fileToString (snd $ files !! idx))
 
-runImport :: ImportDefinition -> Either ParseError CSV -> T.Text -> ([(T.Text, ImportFile)], String)
+runImport :: ImportDefinition ->  Either ParseError CSV -> T.Text -> ([(T.Text, ImportFile)], String)
 runImport importDefinition (Right csv1)  fileSuffix =
   let
    (files, logs) = runWriter (processImport importDefinition (csvToFile csv1) fileSuffix)
@@ -105,7 +111,7 @@ falImport = ImportDefinition [
               Column "Gender" "sex",
               Column "DateOfBirth" "birthdate",
               Column "RaceDayAge" "age",
-              mkCol "city",
+              mkCol "City",
               mkCol "State",
               mkCol "Country",
               Column "Citizenship" "country_ctz",
