@@ -1,8 +1,8 @@
 {-# LANGUAGE OverloadedStrings #-}
 
 import           Control.Monad.Writer
-import           Data.ByteString               (ByteString, readFile)
-import qualified Data.Text                     as T
+import           Data.ByteString                     (ByteString, readFile)
+import qualified Data.Text                           as T
 import           Data.Text.Encoding
 import           Data.Text.Encoding.Error
 import           Data.Tree
@@ -11,8 +11,9 @@ import           Filters
 import           Summary
 import           System.Environment
 import           Text.CSV
-import           Text.ParserCombinators.Parsec hiding (Column)
-import qualified Text.Show.Pretty              as PP
+import           Text.ParserCombinators.Parsec       hiding (Column)
+import           Text.ParserCombinators.Parsec.Error
+import qualified Text.Show.Pretty                    as PP
 import           Types
 
 processImport :: ImportDefinition -> ImportFile -> T.Text -> Writer[[T.Text]] [(T.Text, ImportFile)]
@@ -39,7 +40,8 @@ main = do
   bs <- Data.ByteString.readFile file1' :: IO ByteString
   --file1 <- (parse csv "a" $ T.unpack $ decodeUtf8With lenientDecode bs)
   --file1 <- parseCSVFromFile file1'
-  let (files, logs) = runImport falImport (parse csv "Error Parsing" $ T.unpack $ decodeUtf8With lenientDecode bs) (T.pack file1');
+  let (files, logs) = runImport turkeyTrot (parse csv "Error Parsing" $ T.unpack $ decodeUtf8With lenientDecode bs) (T.pack file1');
+--  let (files, logs) = runImport wrtcImport (parse csv "Error Parsing" $ T.unpack $ decodeUtf8With lenientDecode bs) (T.pack file1');
   mapM_ (saveFile files) [0 .. length files - 1]
   putStrLn logs
 
@@ -52,7 +54,7 @@ runImport importDefinition (Right csv1)  fileSuffix =
    (files, logs) = runWriter (processImport importDefinition (csvToFile csv1) fileSuffix)
    in
     (files, PP.ppShow logs)
-runImport _ _ _                         = error "FIXME: error parsing"
+runImport _ (Left parseError) _                         = error ("Error parsing: " <> concatMap messageString (errorMessages parseError))
 
 csvToFile :: CSV -> ImportFile
 csvToFile = fmap $ fmap T.pack
@@ -100,6 +102,63 @@ mnHalfImport = ImportDefinition [
               -- TODO: neater file handling - better nesting of splits and naming conventions
               ]
 
+mplsHalloweenImport :: ImportDefinition
+mplsHalloweenImport = ImportDefinition [
+              Column "Bib Numbers" "no.",
+              (mkCol "First Name"),
+              (mkCol "Last Name"),
+              (mkCol "Sex"),
+              (mkCol "Age"),
+              Column "Date of Birth" "Birthdate",
+              (mkCol "Address"),
+              Column "ZIP/Postal Code" "Zip",
+              (mkCol "City"),
+              (mkCol "State"),
+              (mkCol "Email"),
+              Column "Phone Number" "Phone",
+              Column "Participant ID" "regid",
+              Column "Corporate Team Challenge - what company do you work for?" "corp_team",
+              Column "Select your Run Club here:" "run_club",
+              Column "Sub Event" "ASSIGNED_EVENT"
+              ] [
+                deleteFilter "Mail My Bib Option" (Column "Sub Event" "ASSIGNED_EVENT")
+              , deleteFilter "" (Column "Bib Numbers" "no.")
+              , countColumnDuplicateValues (Column "Bib Numbers" "no.")
+              , countColumnUniqueValues (Column "Sub Event" "ASSIGNED_EVENT")
+              , countColumnUniqueValues (Column "Corporate Team Challenge - what company do you work for?" "corp_team")
+              , countColumnUniqueValues (Column "Select your Run Club here:" "run_club")
+              , countColumnUniqueValues (mkCol "Sex")
+              ]
+
+turkeyTrot :: ImportDefinition
+turkeyTrot = ImportDefinition [
+              Column "Bib Numbers" "no.",
+              (mkCol "First Name"),
+              (mkCol "Last Name"),
+              (mkCol "Sex"),
+              (mkCol "Age"),
+              Column "Date of Birth" "Birthdate",
+              (mkCol "Address"),
+              Column "ZIP/Postal Code" "Zip",
+              (mkCol "City"),
+              (mkCol "State"),
+              (mkCol "Email"),
+              Column "Phone Number" "Phone",
+              Column "Participant ID" "regid",
+              Column "Corporate Team Challenge - what company do you work for?" "corp_team",
+              Column "Please select your Run Club:" "run_club",
+              Column "Sub Event" "ASSIGNED_EVENT"
+              ] [
+                deleteFilter "Mail My Bib Option" (Column "Sub Event" "ASSIGNED_EVENT")
+              , deleteFilter "" (Column "Bib Numbers" "no.")
+              , countColumnDuplicateValues (Column "Bib Numbers" "no.")
+              , countColumnUniqueValues (Column "Sub Event" "ASSIGNED_EVENT")
+              , countColumnUniqueValues (Column "Corporate Team Challenge - what company do you work for?" "corp_team")
+              , countColumnUniqueValues (Column "Please select your Run Club:" "run_club")
+              , countColumnUniqueValues (mkCol "Sex")
+              ]
+
+
 falImport :: ImportDefinition
 falImport = ImportDefinition [
               Column "Runnerid" "regid",
@@ -131,6 +190,32 @@ falImport = ImportDefinition [
               , countColumnUniqueValues (Column "FalmouthResident" "FALMOUTH")
               , countColumnUniqueValues (Column "Gender" "sex")
               ]
+
+wrtcImport :: ImportDefinition
+wrtcImport = ImportDefinition [
+            Column "MasterEvent" "Assigned_Event",
+            Column "Confirm Code" "REGID",
+            Column "Race Number" "No.",
+            mkCol "Last Name",
+            mkCol "First Name",
+            Column "Gender" "Sex",
+            Column "Event Age" "Age",
+            Column "Email Address" "Email",
+            Column "Address1" "Address",
+            mkCol "City",
+            mkCol "State",
+            mkCol "Zip"
+            ] [
+              findAndReplaceFilter "10 Mile" "M" (Column "MasterEvent" "Assigned_Event"),
+              findAndReplaceFilter "10K" "K" (Column "MasterEvent" "Assigned_Event"),
+              findAndReplaceFilter "5K" "5" (Column "MasterEvent" "Assigned_Event"),
+              findAndReplaceFilter "One Mile" "1" (Column "MasterEvent" "Assigned_Event"),
+              countColumnDuplicateValues   (Column "Race Number" "No.")
+            , countColumnDuplicateValues (Column "Confirm Code" "REGID")
+            , stripSpecialCharsFilter
+            , countColumnUniqueValues (Column "MasterEvent" "Assigned_Event")
+            , countColumnUniqueValues (Column "Gender" "Sex")
+            ]
 
 _rwbImport :: ImportDefinition
 _rwbImport = ImportDefinition [

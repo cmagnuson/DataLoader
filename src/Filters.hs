@@ -18,24 +18,17 @@ stripSpecialCharsFilter  =
       checkAlpha :: (Column, Maybe T.Text) -> (Column, Maybe T.Text)
       checkAlpha (column, Just str) = (column, Just $ T.filter (\x -> isAlphaNum x || elem x [',',' ','\'','-','(',')','_','*','&','%','$','#','@','!', '.', ':',';','/']) str)
       checkAlpha (column, Nothing)  = (column, Nothing)
-  in (logChangedCount cellOp  "Replaced special chars", fmap $ fmap $ fmap $ fmap cellOp)
+  in (logChangedCountAndChangedRows cellOp  "Replaced special chars", fmap $ fmap $ fmap $ fmap cellOp)
 
 findAndReplaceFilter :: T.Text -> T.Text -> Column  -> Filter
 findAndReplaceFilter oldString newString column =
-    let op = findAndReplace oldString newString column
-    in (logFilteredCount op  ("Replace in " <> exportName column <> " " <> oldString <> " -> " <> newString), op)
-
--- partial string to find and replacement string for given column
-findAndReplace :: T.Text -> T.Text -> Column -> FilterOp
--- for each [Row] check each Row for String replacement
-                                          -- each row list, each row, each (Column, String)
-findAndReplace oldString newString column = fmap $ fmap (fmap (fmap (findReplaceHelper oldString newString column)))
-  where findReplaceHelper old new col (testColumn, strM)
-                  | col == testColumn = (col, Just $ T.replace old new str)
-                  | otherwise = (testColumn, Just str)
-                  where
-                    str = fromMaybe "" strM
-
+  let cellOp = findReplace
+      findReplace :: (Column, Maybe T.Text) -> (Column, Maybe T.Text)
+      findReplace (col, Just str)
+        | col == column = (col, Just $ T.replace oldString newString str)
+        | otherwise = (col, Just str)
+      findReplace (col, Nothing) = (col, Nothing)
+  in (logChangedCount cellOp  ("Replace in " <> exportName column <> " " <> oldString <> " -> " <> newString), fmap $ fmap $ fmap $ fmap cellOp)
 
 deleteFilter :: T.Text -> Column -> Filter
 deleteFilter string column =
@@ -116,7 +109,10 @@ logFilteredCount :: FilterOp -> T.Text -> Fileset -> [T.Text]
 logFilteredCount op name rows = [name <> ": " <> (T.pack $ show (countRows rows - countRows (op rows)))]
 
 logChangedCount :: ((Column, Maybe T.Text) -> (Column, Maybe T.Text)) -> T.Text -> Fileset -> [T.Text]
-logChangedCount op name rows = [name <> ": " <> (T.pack $ show $ length (showChangedRows op rows)) <> " modified cells"] <> (showChangedRows op rows)
+logChangedCount op name rows = [name <> ": " <> (T.pack $ show $ length (showChangedRows op rows)) <> " modified cells"]
+
+logChangedCountAndChangedRows :: ((Column, Maybe T.Text) -> (Column, Maybe T.Text)) -> T.Text -> Fileset -> [T.Text]
+logChangedCountAndChangedRows op name rows = (logChangedCount op name rows) <> (showChangedRows op rows)
 
 showChangedRows :: ((Column, Maybe T.Text) -> (Column, Maybe T.Text)) -> Fileset -> [T.Text]
 showChangedRows cellOp fileset =
