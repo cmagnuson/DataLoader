@@ -40,7 +40,7 @@ main = do
   bs <- Data.ByteString.readFile file1' :: IO ByteString
   --file1 <- (parse csv "a" $ T.unpack $ decodeUtf8With lenientDecode bs)
   --file1 <- parseCSVFromFile file1'
-  let (files, logs) = runImport turkeyTrot (parse csv "Error Parsing" $ T.unpack $ decodeUtf8With lenientDecode bs) (T.pack file1');
+  let (files, logs) = runImport reindeerRun (parse csv "Error Parsing" $ T.unpack $ decodeUtf8With lenientDecode bs) (T.pack file1');
 --  let (files, logs) = runImport wrtcImport (parse csv "Error Parsing" $ T.unpack $ decodeUtf8With lenientDecode bs) (T.pack file1');
   mapM_ (saveFile files) [0 .. length files - 1]
   putStrLn logs
@@ -130,8 +130,8 @@ mplsHalloweenImport = ImportDefinition [
               , countColumnUniqueValues (mkCol "Sex")
               ]
 
-turkeyTrot :: ImportDefinition
-turkeyTrot = ImportDefinition [
+reindeerRun :: ImportDefinition
+reindeerRun = ImportDefinition [
               Column "Bib Numbers" "no.",
               (mkCol "First Name"),
               (mkCol "Last Name"),
@@ -146,7 +146,7 @@ turkeyTrot = ImportDefinition [
               Column "Phone Number" "Phone",
               Column "Participant ID" "regid",
               Column "Corporate Team Challenge - what company do you work for?" "corp_team",
-              Column "Please select your Run Club:" "run_club",
+              Column " Select your Run Club here:" "run_club",
               Column "Sub Event" "ASSIGNED_EVENT"
               ] [
                 deleteFilter "Mail My Bib Option" (Column "Sub Event" "ASSIGNED_EVENT")
@@ -154,8 +154,11 @@ turkeyTrot = ImportDefinition [
               , countColumnDuplicateValues (Column "Bib Numbers" "no.")
               , countColumnUniqueValues (Column "Sub Event" "ASSIGNED_EVENT")
               , countColumnUniqueValues (Column "Corporate Team Challenge - what company do you work for?" "corp_team")
-              , countColumnUniqueValues (Column "Please select your Run Club:" "run_club")
+              , countColumnUniqueValues (Column " Select your Run Club here:" "run_club")
               , countColumnUniqueValues (mkCol "Sex")
+              , fileSplitOnColumnEqualsFilter (Column "Sub Event" "ASSIGNED_EVENT") "5K Run - Chip Timed" "5K"
+              , fileSplitOnColumnEqualsFilter (Column "Sub Event" "ASSIGNED_EVENT") "10K Run - Chip Timed" "10K"
+              , fileSplitOnColumnEqualsFilter (Column "Sub Event" "ASSIGNED_EVENT") "Yukon Challenge (10K + 5K)" "Yukon"
               ]
 
 
