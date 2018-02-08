@@ -73,8 +73,8 @@ _testImport = ImportDefinition [
       -- , (findAndReplace "21" "x" (Column "age" "age"))
   ]
 
-mnHalfImport :: ImportDefinition
-mnHalfImport = ImportDefinition [
+_mnHalfImport :: ImportDefinition
+_mnHalfImport = ImportDefinition [
               (mkCol "no."),
               (mkCol "First Name"),
               (mkCol "Last Name"),
@@ -104,8 +104,8 @@ mnHalfImport = ImportDefinition [
               -- TODO: neater file handling - better nesting of splits and naming conventions
               ]
 
-mplsHalloweenImport :: ImportDefinition
-mplsHalloweenImport = ImportDefinition [
+_mplsHalloweenImport :: ImportDefinition
+_mplsHalloweenImport = ImportDefinition [
               Column "Bib Numbers" "no.",
               (mkCol "First Name"),
               (mkCol "Last Name"),
@@ -164,8 +164,8 @@ reindeerRun = ImportDefinition [
               ]
 
 
-falImport :: ImportDefinition
-falImport = ImportDefinition [
+_falImport :: ImportDefinition
+_falImport = ImportDefinition [
               Column "Runnerid" "regid",
               Column "BibNumber" "no.",
               Column "FullBibNumber" "bib",
@@ -196,8 +196,8 @@ falImport = ImportDefinition [
               , countColumnUniqueValues (Column "Gender" "sex")
               ]
 
-wrtcImport :: ImportDefinition
-wrtcImport = ImportDefinition [
+_wrtcImport :: ImportDefinition
+_wrtcImport = ImportDefinition [
             Column "MasterEvent" "Assigned_Event",
             Column "Confirm Code" "REGID",
             Column "Race Number" "No.",
