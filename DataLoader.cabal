@@ -35,7 +35,7 @@ executable DataLoader
         parsec -any,
         lucid -any,
         pretty-show >=1.6.0,
-        DataLoader -any,
+        DataLoader,
         mtl -any,
         bytestring -any,
         containers -any

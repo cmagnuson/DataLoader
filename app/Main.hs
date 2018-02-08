@@ -1,5 +1,7 @@
 {-# LANGUAGE OverloadedStrings #-}
 
+module Main(main) where
+
 import           Control.Monad.Writer
 import           Data.ByteString                     (ByteString, readFile)
 import qualified Data.Text                           as T
