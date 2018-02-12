@@ -1,16 +1,25 @@
-{-# LANGUAGE OverloadedStrings #-}
+{-# LANGUAGE DeriveGeneric #-}
 
 module Types where
 
-import           Control.Monad.Writer
-import qualified Data.Text            as T
+import           Data.Aeson
+import qualified Data.Text    as T
 import           Data.Tree
+import           GHC.Generics
 
-data Column = Column
-    {
+data Column = Column {
      importName :: T.Text,
      exportName :: T.Text
-    } deriving (Eq, Show)
+} deriving (Eq, Show, Generic)
+
+
+newtype Filter = Filter (FilterExplanation, FilterOp)
+  deriving(Generic)
+
+data ImportDefinition = ImportDefinition {
+     columns :: [Column],
+     filters :: [Filter]
+} deriving(Generic)
 
 mkCol :: T.Text -> Column
 mkCol s = Column s s
@@ -30,16 +39,3 @@ type Fileset = Tree (T.Text, File)
 type FilterOp = Fileset -> Fileset
 
 type FilterExplanation = Fileset -> [T.Text]
-
-type Filter = (FilterExplanation, FilterOp)
-
-data ImportDefinition = ImportDefinition {
-     columns :: [Column],
-     filters :: [Filter]
-}
-
-filterRows :: Fileset -> [Filter] -> Writer [[T.Text]] Fileset
-filterRows rows []            = return rows
-filterRows rows ((filtExp, filtOp) : rest) = do
-                                  tell [filtExp rows]
-                                  filterRows (filtOp rows) rest

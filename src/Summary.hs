@@ -12,7 +12,7 @@ import           Filters
 import           Types
 
 countColumnUniqueValues :: Column -> Filter
-countColumnUniqueValues column = (countColumnUniqueValuesLogger column, id)
+countColumnUniqueValues column = Filter (countColumnUniqueValuesLogger column, id)
 
 countColumnUniqueValuesLogger :: Column -> Fileset -> [T.Text]
 countColumnUniqueValuesLogger column rows = ["Column " <> exportName column <> T.pack " values: " <>
@@ -23,7 +23,7 @@ countColumnUniqueValuesLogger column rows = ["Column " <> exportName column <> T
               T.intercalate  (T.pack ", ") (fmap (\lst -> T.pack "(" <> head lst <> T.pack  "," <> T.pack  (show $ length lst) <> T.pack  ")") values)
 
 countColumnDuplicateValues :: Column -> Filter
-countColumnDuplicateValues column = (countColumnDuplicateValuesLogger column, id)
+countColumnDuplicateValues column = Filter (countColumnDuplicateValuesLogger column, id)
 
 countColumnDuplicateValuesLogger :: Column -> Fileset -> [T.Text]
 countColumnDuplicateValuesLogger column rows = ["Column " <> exportName column <> T.pack " duplicate values: " <>

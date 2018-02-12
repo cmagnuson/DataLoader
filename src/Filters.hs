@@ -2,15 +2,24 @@
 
 module Filters where
 
-import           Data.Char   (isAlpha, isAlphaNum)
-import qualified Data.List   as L
+import           Control.Monad.Writer
+import           Data.Aeson
+import           Data.Aeson.Types
+import           Data.Char            (isAlpha, isAlphaNum)
+import qualified Data.List            as L
 import           Data.Maybe
 import           Data.Monoid
-import qualified Data.Text   as T
+import qualified Data.Text            as T
 import           Data.Tree
-import           Files       (flattenIgnoreEmpty)
+import           Files                (flattenIgnoreEmpty)
+import           GHC.Generics
 import           Types
 
+filterRows :: Fileset -> [Filter] -> Writer [[T.Text]] Fileset
+filterRows rows []            = return rows
+filterRows rows (Filter (filtExp, filtOp) : rest) = do
+                                  tell [filtExp rows]
+                                  filterRows (filtOp rows) rest
 
 stripSpecialCharsFilter :: Filter
 stripSpecialCharsFilter  =
@@ -18,7 +27,7 @@ stripSpecialCharsFilter  =
       checkAlpha :: (Column, Maybe T.Text) -> (Column, Maybe T.Text)
       checkAlpha (column, Just str) = (column, Just $ T.filter (\x -> isAlphaNum x || elem x [',',' ','\'','-','(',')','_','*','&','%','$','#','@','!', '.', ':',';','/']) str)
       checkAlpha (column, Nothing)  = (column, Nothing)
-  in (logChangedCountAndChangedRows cellOp  "Replaced special chars", fmap $ fmap $ fmap $ fmap cellOp)
+  in Filter (logChangedCountAndChangedRows cellOp  "Replaced special chars", fmap $ fmap $ fmap $ fmap cellOp)
 
 findAndReplaceFilter :: T.Text -> T.Text -> Column  -> Filter
 findAndReplaceFilter oldString newString column =
@@ -28,12 +37,12 @@ findAndReplaceFilter oldString newString column =
         | col == column = (col, Just $ T.replace oldString newString str)
         | otherwise = (col, Just str)
       findReplace (col, Nothing) = (col, Nothing)
-  in (logChangedCount cellOp  ("Replace in " <> exportName column <> " " <> oldString <> " -> " <> newString), fmap $ fmap $ fmap $ fmap cellOp)
+  in Filter (logChangedCount cellOp  ("Replace in " <> exportName column <> " " <> oldString <> " -> " <> newString), fmap $ fmap $ fmap $ fmap cellOp)
 
 deleteFilter :: T.Text -> Column -> Filter
 deleteFilter string column =
     let op = delete string column
-    in (logFilteredCount op  ("Delete where " <> (exportName column) <> " == " <> string), op)
+    in Filter (logFilteredCount op  ("Delete where " <> (exportName column) <> " == " <> string), op)
 
 -- matching string and column to delete on
 delete :: T.Text -> Column -> FilterOp
@@ -57,7 +66,7 @@ deleteIf eq (y:ys) = if eq y then deleteIf eq ys else y : deleteIf eq ys
 deleteIfContainsFilter :: T.Text -> Column -> Filter
 deleteIfContainsFilter string column =
     let op = deleteIfContains string column
-    in (logFilteredCount op  ("Delete where " <> (exportName column) <> " contains " <> string), op)
+    in Filter (logFilteredCount op  ("Delete where " <> (exportName column) <> " contains " <> string), op)
 
 deleteIfContains :: T.Text -> Column -> FilterOp
 deleteIfContains string column = fmap $ fmap (deleteIf (\row -> containsString string (getColumnValue column row )))
@@ -80,12 +89,12 @@ fileSplitGeneric splitter Node {rootLabel=(label, file), subForest = _} =
 fileSplitOnColumnFilter :: Column -> Filter
 fileSplitOnColumnFilter column =
     let op = fileSplitOnColumn column
-    in (logFilesCount op (exportName column), op)
+    in Filter (logFilesCount op (exportName column), op)
 
 fileSplitOnColumnEqualsFilter :: Column -> T.Text -> T.Text -> Filter
 fileSplitOnColumnEqualsFilter column value fileSuffix =
     let op = fileSplitOnColumnEquals column value fileSuffix
-    in (logFilesCount op (exportName column <> "==" <> value), op)
+    in Filter (logFilesCount op (exportName column <> "==" <> value), op)
 
 fileSplitOnColumn :: Column -> FilterOp
 fileSplitOnColumn col = fileSplitGeneric (nameFiles 1 . L.transpose . L.groupBy (\a b -> (getColumnValue col a == getColumnValue col b)))
