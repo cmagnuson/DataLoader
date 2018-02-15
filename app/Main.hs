@@ -3,13 +3,19 @@
 module Main(main) where
 
 import           Control.Monad.Writer
-import           Data.ByteString                     (ByteString, readFile)
+import           Data.Aeson
+import qualified Data.ByteString                     as B
+import           Data.ByteString.Lazy                (fromStrict)
+import           Data.ByteString.Lazy.Char8          as C8 (pack)
+import           Data.Maybe
 import qualified Data.Text                           as T
-import           Data.Text.Encoding
+import           Data.Text.Encoding                  (decodeUtf8With,
+                                                      encodeUtf8)
 import           Data.Text.Encoding.Error
 import           Data.Tree
 import           Files
 import           Filters
+import           Json
 import           Summary
 import           System.Environment
 import           Text.CSV
@@ -38,14 +44,32 @@ _eventColumn = Column "Event Name" "ASSIGNED_EVENT"
 --TODO: read file as bytestring, then try and convert to UTF8 -> decodeUtf8With lenientDecode bs, then try and parse as csv
 main :: IO ()
 main = do
-  [file1'] <- getArgs
-  bs <- Data.ByteString.readFile file1' :: IO ByteString
-  --file1 <- (parse csv "a" $ T.unpack $ decodeUtf8With lenientDecode bs)
-  --file1 <- parseCSVFromFile file1'
-  let (files, logs) = runImport reindeerRun (parse csv "Error Parsing" $ T.unpack $ decodeUtf8With lenientDecode bs) (T.pack file1');
---  let (files, logs) = runImport wrtcImport (parse csv "Error Parsing" $ T.unpack $ decodeUtf8With lenientDecode bs) (T.pack file1');
+  args <- getArgs
+  (file, filename, importDefinition) <- processArgs args
+  let (files, logs) = runImport importDefinition (parse csv "Error Parsing" $ T.unpack file) filename
   mapM_ (saveFile files) [0 .. length files - 1]
   putStrLn logs
+
+processArgs :: [String] -> IO (T.Text, T.Text, ImportDefinition)
+processArgs [file1']         = do
+                                file <- handleFile file1'
+                                return (file, T.pack file1', reindeerRun)
+processArgs [file1', file2'] = do
+                                file <- handleFile file1'
+                                json <- handleJson file2'
+                                return (file, T.pack file1', json)
+processArgs _                = fail "Invalid number of arguments"
+
+handleFile :: String -> IO T.Text
+handleFile filename = do
+                        bs <- B.readFile filename
+                        return  (decodeUtf8With lenientDecode $ bs)
+
+handleJson :: String -> IO ImportDefinition
+handleJson filename = do
+                        str <- handleFile filename
+                        return (fromJust $ decode $ fromStrict $ encodeUtf8 str)
+
 
 saveFile :: [(T.Text, ImportFile)] -> Int -> IO()
 saveFile files idx = writeFile (T.unpack (fst (files !! idx) <> ".csv")) (fileToString (snd $ files !! idx))
