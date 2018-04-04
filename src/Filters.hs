@@ -97,7 +97,7 @@ fileSplitOnColumnEqualsFilter column value fileSuffix =
     in Filter (logFilesCount op (exportName column <> "==" <> value), op)
 
 fileSplitOnColumn :: Column -> FilterOp
-fileSplitOnColumn col = fileSplitGeneric (nameFiles 1 . L.transpose . L.groupBy (\a b -> (getColumnValue col a == getColumnValue col b)))
+fileSplitOnColumn col = fileSplitGeneric (nameFiles 1 . L.transpose . L.groupBy (\a b -> (getColumnValue col a == getColumnValue col b)) . L.sortOn (getColumnValue col))
   where nameFiles :: Int -> [File] -> [(T.Text, File)]
         nameFiles count (file:rest) = (T.pack "split-" <> T.pack (filter isAlpha $ T.unpack $ exportName col) <> "-" <> T.pack (show count), file) : (nameFiles (count+1) rest)
         nameFiles _ [] = []
