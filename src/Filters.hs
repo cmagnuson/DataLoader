@@ -52,7 +52,7 @@ delete string column = fmap $ fmap (deleteIf (\row -> getColumnValue column row 
 getColumnValue :: Column -> Row -> Maybe T.Text
 getColumnValue testCol ((col, strM) : rest)
                | col == testCol = Just str
-               | null rest = Nothing
+               | null rest = error $ T.unpack ("Filter column does not exist in import definition columns (" <> (importName testCol) <> "," <> (exportName testCol) <> ")")
                | otherwise = getColumnValue testCol rest
                where
                    str = fromMaybe "" strM
