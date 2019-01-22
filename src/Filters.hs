@@ -39,6 +39,17 @@ findAndReplaceFilter oldString newString column =
       findReplace (col, Nothing) = (col, Nothing)
   in Filter (logChangedCount cellOp  ("Replace in " <> exportName column <> " " <> oldString <> " -> " <> newString), fmap $ fmap $ fmap $ fmap cellOp)
 
+findAndReplaceExactMatchFilter :: T.Text -> T.Text -> Column  -> Filter
+findAndReplaceExactMatchFilter oldString newString column =
+  let cellOp = findReplace
+      findReplace :: (Column, Maybe T.Text) -> (Column, Maybe T.Text)
+      findReplace (col, Just str)
+        | col == column  && str == oldString = (col, Just $ T.replace oldString newString str)
+        | otherwise = (col, Just str)
+      findReplace (col, Nothing) = (col, Nothing)
+  in Filter (logChangedCount cellOp  ("Replace in " <> exportName column <> " " <> oldString <> " -> " <> newString), fmap $ fmap $ fmap $ fmap cellOp)
+
+
 deleteFilter :: T.Text -> Column -> Filter
 deleteFilter string column =
     let op = delete string column

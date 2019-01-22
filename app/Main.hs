@@ -19,7 +19,7 @@ import           Json
 import           Summary
 import           System.Environment
 import           Text.CSV
-import           Text.ParserCombinators.Parsec       hiding (Column)
+import           Text.ParserCombinators.Parsec       (parse)
 import           Text.ParserCombinators.Parsec.Error
 import qualified Text.Show.Pretty                    as PP
 import           Types

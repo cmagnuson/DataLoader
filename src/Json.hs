@@ -27,13 +27,14 @@ instance FromJSON Filter where
      filterName <- o .: "filter"
      case filterName of
        "stripSpecialChars"            -> return stripSpecialCharsFilter
-       "findAndReplace"               -> findAndReplaceFilter <$> o .: "oldString" <*> o .: "newString" <*> (mkCol <$> (o .: "column"))
-       "delete"                       -> deleteFilter <$> o .: "value" <*> (mkCol <$> (o .: "column"))
-       "deleteIfContains"             -> deleteIfContainsFilter <$> o .: "value" <*> (mkCol <$> (o .: "column"))
-       "fileSplitOnColumn"            -> fileSplitOnColumnFilter <$> (mkCol <$> (o .: "column"))
-       "fileSplitOnColumnEquals"      -> fileSplitOnColumnEqualsFilter <$> (mkCol <$> (o .: "column")) <*> o .: "value" <*> o.: "fileSuffix"
-       "countColumnUniqueValues"      -> countColumnUniqueValues <$> (mkCol <$> (o .: "column"))
-       "countColumnDuplicateValues"   -> countColumnDuplicateValues <$> (mkCol <$> (o .: "column"))
+       "findAndReplace"               -> findAndReplaceFilter <$> o .: "oldString" <*> o .: "newString" <*> (mkColMay <$> (o .: "column") <*> o .:? "columnExport")
+       "findAndReplaceExactMatch"               -> findAndReplaceExactMatchFilter <$> o .: "oldString" <*> o .: "newString" <*> (mkColMay <$> (o .: "column") <*> o .:? "columnExport")
+       "delete"                       -> deleteFilter <$> o .: "value" <*> (mkColMay <$> (o .: "column") <*> o .:? "columnExport")
+       "deleteIfContains"             -> deleteIfContainsFilter <$> o .: "value" <*> (mkColMay <$> (o .: "column") <*> o .:? "columnExport")
+       "fileSplitOnColumn"            -> fileSplitOnColumnFilter <$> (mkColMay <$> (o .: "column") <*> o .:? "columnExport")
+       "fileSplitOnColumnEquals"      -> fileSplitOnColumnEqualsFilter <$> (mkColMay <$> (o .: "column") <*> o .:? "columnExport") <*> o .: "value" <*> o.: "fileSuffix"
+       "countColumnUniqueValues"      -> countColumnUniqueValues <$> (mkColMay <$> (o .: "column") <*> o .:? "columnExport")
+       "countColumnDuplicateValues"   -> countColumnDuplicateValues <$> (mkColMay <$> (o .: "column") <*> o .:? "columnExport")
        _                              -> fail ("unknown filter: " ++ filterName)
 instance ToJSON Filter where
     toJSON _ = "" --TODO: implement serialization as well?  Need new data type to tag how to serialize if so
