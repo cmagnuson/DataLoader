@@ -3,16 +3,12 @@
 module Filters where
 
 import           Control.Monad.Writer
-import           Data.Aeson
-import           Data.Aeson.Types
 import           Data.Char            (isAlpha, isAlphaNum)
 import qualified Data.List            as L
 import           Data.Maybe
-import           Data.Monoid
 import qualified Data.Text            as T
 import           Data.Tree
 import           Files                (flattenIgnoreEmpty)
-import           GHC.Generics
 import           Types
 
 filterRows :: Fileset -> [Filter] -> Writer [[T.Text]] Fileset
