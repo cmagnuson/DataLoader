@@ -21,7 +21,7 @@ stripSpecialCharsFilter :: Filter
 stripSpecialCharsFilter  =
   let cellOp =  checkAlpha
       checkAlpha :: (Column, Maybe T.Text) -> (Column, Maybe T.Text)
-      checkAlpha (column, Just str) = (column, Just $ T.filter (\x -> isAlphaNum x || elem x [',',' ','\'','-','(',')','_','*','&','%','$','#','@','!', '.', ':',';','/']) str)
+      checkAlpha (column, Just str) = (column, Just $ T.filter (\x -> isAlphaNum x || elem x [',',' ','\'','-','(',')','_','*','&','%','$','#','@','!', '.', ':',';','/', '+', '?']) str)
       checkAlpha (column, Nothing)  = (column, Nothing)
   in Filter (logChangedCountAndChangedRows cellOp  "Replaced special chars", fmap $ fmap $ fmap $ fmap cellOp)
 
