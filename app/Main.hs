@@ -34,12 +34,12 @@ processImport (ImportDefinition colmns fltrs) (header : rows) fileSuffix =
       return (fromRows rowss)
 --  fromRows (filterRows [(toRows rows header colmns)] fltrs)
 
-_numberColumn :: Column
-_numberColumn = Column "RaceNumber" "No."
-_relayColumn :: Column
-_relayColumn = Column "Display/TeamName" "RELAY_TEAM"
-_eventColumn :: Column
-_eventColumn = Column "Event Name" "ASSIGNED_EVENT"
+numberColumn :: Column
+numberColumn = Column "RaceNumber" "Bib"
+relayColumn :: Column
+relayColumn = Column "Team Name" "RELAY_TEAM"
+eventColumn :: Column
+eventColumn = Column "Race Name" "ASSIGNED_EVENT"
 
 --TODO: read file as bytestring, then try and convert to UTF8 -> decodeUtf8With lenientDecode bs, then try and parse as csv
 main :: IO ()
@@ -53,7 +53,7 @@ main = do
 processArgs :: [String] -> IO (T.Text, T.Text, ImportDefinition)
 processArgs [file1']         = do
                                 file <- handleFile file1'
-                                return (file, T.pack file1', reindeerRun)
+                                return (file, T.pack file1', wwImport)
 processArgs [file1', file2'] = do
                                 file <- handleFile file1'
                                 json <- handleJson file2'
@@ -128,6 +128,40 @@ _mnHalfImport = ImportDefinition [
               -- TODO: neater file handling - better nesting of splits and naming conventions
               ]
 
+knoxvilleImport :: ImportDefinition
+knoxvilleImport = ImportDefinition [
+              (Column "Bib" "No."),
+              (mkCol "First Name"),
+              (mkCol "Last Name"),
+              (Column "E-mail Address" "Email"),
+              (Column "Middle Name" "MI"),
+              (Column "Gender" "Sex"),
+              (mkCol "Age"),
+              (Column "Date of Birth" "DOB"),
+              (Column "Street Address" "ADDRESS"),
+              (mkCol "Country"),
+              (mkCol "City"),
+              (Column "Zip Code" "Zip"),
+              (Column "Race Group" "Team"),
+              (Column "Corporate Team" "Corp Team"),
+              (Column "Event" "Race"),
+              (Column "Race Group - Type" "Group Type"),
+              (mkCol "Emergency Contact Name"),
+              (mkCol "Emergency Contact Phone"),
+              (mkCol "Registration ID")
+              ] [
+                deleteFilter "" (Column "Bib" "No.")
+                , stripSpecialCharsFilter
+              -- , fileSplitOnColumnEqualsFilter (Column "Event" "Race") "S" "Skate"
+              , fileSplitOnColumnFilter (Column "Bib" "No.")
+              , countColumnDuplicateValues (Column "Bib" "No.")
+              , countColumnUniqueValues (Column "Event" "Race")
+              , countColumnUniqueValues (Column "Corporate Team" "Corp Team")
+              , countColumnUniqueValues (Column "Race Group" "Team")
+              , countColumnUniqueValues (Column "Gender" "Sex")
+              ]
+
+
 _mplsHalloweenImport :: ImportDefinition
 _mplsHalloweenImport = ImportDefinition [
               Column "Bib Numbers" "no.",
@@ -156,8 +190,8 @@ _mplsHalloweenImport = ImportDefinition [
               , countColumnUniqueValues (mkCol "Sex")
               ]
 
-reindeerRun :: ImportDefinition
-reindeerRun = ImportDefinition [
+_reindeerRun :: ImportDefinition
+_reindeerRun = ImportDefinition [
               Column "Bib Numbers" "no.",
               (mkCol "First Name"),
               (mkCol "Last Name"),
@@ -207,18 +241,58 @@ _falImport = ImportDefinition [
               mkCol "Zip",
               mkCol "Email",
               Column "FalmouthResident" "FALMOUTH",
-              Column "Shoutout" "Notes"
+              Column "Shoutout" "Notes",
+              Column "Race" "Mobility"
               ] [
               countColumnDuplicateValues (Column "BibNumber" "no.")
               , countColumnDuplicateValues (Column "Runnerid" "regid")
-              -- , findAndReplaceFilter "\"" "" (Column "FirstName" "first name") -- TODO: replace on all columns special charecters
-              -- , findAndReplaceFilter "\"" "" (Column "LastName" "last name")
               , stripSpecialCharsFilter
               , countColumnDuplicateValues (mkCol "Tagid")
               , countColumnUniqueValues (mkCol "Country")
               , countColumnUniqueValues (Column "FalmouthResident" "FALMOUTH")
               , countColumnUniqueValues (Column "Gender" "sex")
+              , countColumnUniqueValues (Column "Race" "Mobility")
+              , findAndReplaceExactMatchFilter "FRR" "" (Column "Race" "Mobility")
+              , findAndReplaceExactMatchFilter "FRRPRW" "" (Column "Race" "Mobility")
+              , findAndReplaceExactMatchFilter "FRREW" "" (Column "Race" "Mobility")
+              , findAndReplaceExactMatchFilter "FRRDUO" "" (Column "Race" "Mobility")
+              , findAndReplaceExactMatchFilter "FRRAWD" "X" (Column "Race" "Mobility")
               ]
+
+wwImport :: ImportDefinition
+wwImport = ImportDefinition [
+  mkCol "age",
+  mkCol "FIRST NAME",
+  mkCol "LAST NAME",
+  mkCol "BIRTHDATE",
+  mkCol "SEX",
+  mkCol "ADDRESS",
+  mkCol "ZIP",
+  mkCol "CITY",
+  mkCol "STATE",
+  mkCol "COUNTRY",
+  mkCol "EMAIL",
+  mkCol "PHONE",
+  mkCol "REGID",
+  mkCol "TRANSID",
+  mkCol "ASSIGNED_EVENT",
+  mkCol "SHIRT",
+  mkCol "WHEEL",
+  mkCol "No.",
+  mkCol "KITUPGRADE",
+  mkCol "KITNUMBER"
+  ][
+    stripSpecialCharsFilter
+  , countColumnDuplicateValues (mkCol "No.")
+  , countColumnDuplicateValues (mkCol "TRANSID")
+  , countColumnDuplicateValues (mkCol "REGID")
+  , countColumnUniqueValues (mkCol "ASSIGNED_EVENT")
+  , countColumnUniqueValues (mkCol "COUNTRY")
+  , countColumnUniqueValues (mkCol "SHIRT")
+  , countColumnUniqueValues (mkCol "WHEEL")
+  , countColumnUniqueValues (mkCol "KITUPGRADE")
+  , countColumnUniqueValues (mkCol "KITNUMBER")
+  ]
 
 _wrtcImport :: ImportDefinition
 _wrtcImport = ImportDefinition [
@@ -233,42 +307,51 @@ _wrtcImport = ImportDefinition [
             Column "Address1" "Address",
             mkCol "City",
             mkCol "State",
-            mkCol "Zip"
+            mkCol "Zip",
+            mkCol "Duo",
+            Column "DOB" "Birthdate"
             ] [
               findAndReplaceFilter "10 Mile" "M" (Column "MasterEvent" "Assigned_Event"),
               findAndReplaceFilter "10K" "K" (Column "MasterEvent" "Assigned_Event"),
               findAndReplaceFilter "5K" "5" (Column "MasterEvent" "Assigned_Event"),
               findAndReplaceFilter "One Mile" "1" (Column "MasterEvent" "Assigned_Event"),
+              findAndReplaceFilter "TRUE" "X" (mkCol "Duo"),
+              findAndReplaceFilter "FALSE" "" (mkCol "Duo"),
               countColumnDuplicateValues   (Column "Race Number" "No.")
             , countColumnDuplicateValues (Column "Confirm Code" "REGID")
             , stripSpecialCharsFilter
             , countColumnUniqueValues (Column "MasterEvent" "Assigned_Event")
             , countColumnUniqueValues (Column "Gender" "Sex")
+            , countColumnUniqueValues (mkCol "Duo")
             ]
 
 _rwbImport :: ImportDefinition
 _rwbImport = ImportDefinition [
-          _numberColumn,
-          (Column "FirstName" "First Name"),
-          (Column "LastName" "Last Name"),
+          numberColumn,
+          (Column "First Name" "First Name"),
+          (Column "Last Name" "Last Name"),
           (Column "Gender" "Sex"),
-          (Column "Confirmation Code" "REGID"),
-          (Column "Series Code" "CHALLENGE_CODE"),
-          _relayColumn,
-          _eventColumn,
-          (Column "Address" "Address"),
+          (Column "Confirm Code" "REGID"),
+          (Column "Challenge Series Number" "CHALLENGE_CODE"),
+          relayColumn,
+          eventColumn,
+          (Column "Address 1" "Address"),
           (Column "City" "City"),
           (Column "State" "State"),
           (Column "Zip" "Zip"),
-          (Column "Age" "Age"),
-          (Column "Birthdate" "Birthdate"),
-          (Column "Email" "Email"),
-          (Column "DateEntered" "DATE_REGISTERED")
+          (Column "Event Age" "Age"),
+          (Column "DOB" "Birthdate"),
+          (Column "Email Address" "Email"),
+          (Column "Registered" "DATE_REGISTERED")
           ] [
-    --      (sort
-    --      (findAndReplace "-1" "" numberColumn),
-    --      (findAndReplace "-2" "" numberColumn),
-    --      (findAndReplace " (captain)" "" relayColumn),
-    --      (findAndReplace "Relay" "H" eventColumn),
-    --      (split numberColumn)
+          --(findAndReplaceFilter "-1" "" numberColumn),
+          --(findAndReplaceFilter "-2" "" numberColumn),
+          (findAndReplaceFilter " (captain)" "" relayColumn),
+          (findAndReplaceFilter "Relay" "H" eventColumn),
+        --  (fileSplitOnColumnFilter numberColumn),
+          countColumnDuplicateValues   numberColumn
+        , countColumnDuplicateValues (Column "Confirm Code" "REGID")
+        , stripSpecialCharsFilter
+        , countColumnUniqueValues eventColumn
+        , countColumnUniqueValues (Column "Gender" "Sex")
           ]

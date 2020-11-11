@@ -1,0 +1,6 @@
+{"columns":
+	[{"importName":"NO."},
+	{"importName":"STATE"}],
+"filters":
+	[{"filter":"findAndReplace", "oldString":"WI", "newString":"WO", "column":"STATE"},
+	{"filter":"countColumnUniqueValues", "column":"STATE"}]}
