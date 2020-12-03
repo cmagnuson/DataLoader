@@ -12,7 +12,14 @@ jobs:
           # cabal-version: 'latest'. Omitted, but defalts to 'latest'
           enable-stack: true
           stack-version: 'latest'
+      - uses: actions/cache@v1
+        name: Cache ~/.stack
+        with:
+          path: ~/.stack
+          key: cache-stack
+      - name: Compile
+        run: stack build --local-bin-path .
+      - name: Test
+        run: stack test
       - name: Display structure of files
         run: ls -R
-      - name: Compile
-        run: stack build
