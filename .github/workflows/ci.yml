@@ -1,0 +1,18 @@
+on: [push]
+name: build
+jobs:
+  runhaskell:
+    name: Build
+    runs-on: ubuntu-latest # or macOS-latest, or windows-latest
+    steps:
+      - uses: actions/checkout@v2
+      - uses: actions/setup-haskell@v1.1
+        with:
+          ghc-version: '8.10.1' # Exact version of ghc to use
+          # cabal-version: 'latest'. Omitted, but defalts to 'latest'
+          enable-stack: true
+          stack-version: 'latest'
+      - name: Display structure of files
+        run: ls -R
+      - name: Compile
+        run: stack build
