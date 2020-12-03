@@ -26,6 +26,13 @@ jobs:
         run: stack test
       - name: Install
         run: stack --local-bin-path . install
+      - name:  Rename
+        run:   |
+         if [ "$RUNNER_OS" == "Linux" ]; then
+              mv DataLoader DataLoader-Ubuntu
+         elif [ "$RUNNER_OS" == "macOS" ]; then
+              mv DataLoader DataLoader-macOS
+         fi
       - name: Display structure of files
         run: ls -R
       - name: Archive Artifact
@@ -33,7 +40,9 @@ jobs:
         with:
           name: DataLoader-${{ matrix.os }}
           path: |
-            DataLoader
+            DataLoader-Ubuntu
+            DataLoader-macOS
+            DataLoader.exe
           
   release:
     name: release
