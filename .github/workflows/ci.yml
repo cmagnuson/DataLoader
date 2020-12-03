@@ -18,8 +18,10 @@ jobs:
           path: ~/.stack
           key: cache-stack
       - name: Compile
-        run: stack build --local-bin-path .
+        run: stack build
       - name: Test
         run: stack test
+      - name: Install
+        run: stack --local-bin-path . install
       - name: Display structure of files
         run: ls -R
