@@ -1,9 +1,12 @@
 on: [push]
-name: build
+name: CI
 jobs:
-  runhaskell:
+  build:
     name: Build
-    runs-on: ubuntu-latest # or macOS-latest, or windows-latest
+    runs-on: ${{ matrix.os }}
+    strategy:
+      matrix:
+        os: [macos-latest, ubuntu-latest, windows-latest]
     steps:
       - uses: actions/checkout@v2
       - uses: actions/setup-haskell@v1.1.4
@@ -25,3 +28,31 @@ jobs:
         run: stack --local-bin-path . install
       - name: Display structure of files
         run: ls -R
+      - name: Archive Artifact
+        uses: actions/upload-artifact@v2
+        with:
+          name: DataLoader-${{ matrix.os }}
+          path: |
+            DataLoader
+          
+  release:
+    name: release
+    needs: [build]
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Download Builds
+        uses: actions/download-artifact@v2
+      - name: Display structure of downloaded files
+        run: ls -R
+      - name: Publish release
+        uses: "marvinpinto/action-automatic-releases@latest"
+        with:
+          repo_token: "${{ secrets.GITHUB_TOKEN }}"
+          automatic_release_tag: "latest"
+          prerelease: true
+          title: "Development Build"
+          files: |
+            DataLoader-macos-latest/*
+            DataLoader-ubuntu-latest/*
+            DataLoader-windows-latest/*
